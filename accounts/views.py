@@ -6,6 +6,12 @@ from django.contrib.auth import login
 from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from datetime import timedelta
+from main.models import Appointment  # assumes Appointment is in your main app
+
 def patient_signup(request):
     if request.method == 'POST':
         form = PatientSignupForm(request.POST)
@@ -50,7 +56,7 @@ def login_view(request):
         else:
             messages.error(request, "Invalid username or password.")
 
-    return render(request, 'accounts/index.html')
+    return render(request, 'accounts/login.html')
 from django.contrib.auth import logout
 
 def logout_view(request):
@@ -64,3 +70,47 @@ def patient_dashboard(request):
 
 def staff_dashboard(request):
     return HttpResponse("Welcome, staff!")
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from datetime import timedelta
+from main.models import Appointment  # or from .models if Appointment is in accounts
+
+@login_required
+def calendar_page(request):
+    return render(request, 'accounts/staff_calendar.html')
+
+@login_required
+def calendar_data(request):
+    appointments = Appointment.objects.all()
+    events = []
+
+    for appt in appointments:
+        events.append({
+            "id": appt.id,
+            "title": f"{appt.patient.age} - {appt.appointment_type}",
+            "start": appt.date.isoformat(),
+            "end": (appt.date + timedelta(hours=1)).isoformat(),
+        })
+
+    return JsonResponse(events, safe=False)
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+from main.models import Appointment
+
+@csrf_exempt
+def update_appointment(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        appt_id = data.get('id')
+        new_title = data.get('title')
+
+        try:
+            appt = Appointment.objects.get(id=appt_id)
+            appt.appointment_type = new_title
+            appt.save()
+            return JsonResponse({'success': True})
+        except Appointment.DoesNotExist:
+            return JsonResponse({'error': 'Appointment not found'}, status=404)
+    return JsonResponse({'error': 'Invalid request'}, status=400)

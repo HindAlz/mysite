@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Doctor's Appointment Calendar</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        h2 {
+            margin: 30px;
+        }
+        #calendar {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <h2>Doctor's Appointment Calendar</h2>
+    <div id='calendar'></div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        let calendarEl = document.getElementById('calendar');
+
+        let calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: 'dayGridMonth',
+          timeZone: 'UTC',
+          events: '/accounts/calendar/data/',
+
+          headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+          },
+
+          eventColor: '#007bff',
+          eventTextColor: 'white',
+
+          eventClick: function(info) {
+            const newTitle = prompt('Edit appointment title (e.g. reason):', info.event.title);
+
+            if (newTitle) {
+              fetch('/accounts/calendar/update/', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                  id: info.event.id,
+                  title: newTitle
+                })
+              }).then(response => {
+                if (response.ok) {
+                  info.event.setProp('title', newTitle);
+                } else {
+                  alert("Failed to update appointment.");
+                }
+              });
+            }
+          }
+        });
+
+        calendar.render();
+
+        function getCookie(name) {
+          let cookieValue = null;
+          if (document.cookie && document.cookie !== '') {
+              const cookies = document.cookie.split(';');
+              for (let i = 0; i < cookies.length; i++) {
+                  const cookie = cookies[i].trim();
+                  if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                      cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                      break;
+                  }
+              }
+          }
+          return cookieValue;
+        }
+      });
+    </script>
+</body>
+</html>

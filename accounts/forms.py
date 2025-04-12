@@ -57,7 +57,7 @@ def login_view(request):
                 return redirect('patient_dashboard')
             elif user.is_staff_member:
                 return redirect('staff_dashboard')
-    return render(request, 'accounts/index.html')
+    return render(request, 'accounts/login.html')
 
 def logout_view(request):
     logout(request)
