@@ -50,7 +50,7 @@ def login_view(request):
         else:
             messages.error(request, "Invalid username or password.")
 
-    return render(request, 'accounts/login.html')
+    return render(request, 'accounts/index.html')
 from django.contrib.auth import logout
 
 def logout_view(request):
