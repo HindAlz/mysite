@@ -24,7 +24,25 @@
     <h2>Doctor's Appointment Calendar</h2>
     <div id='calendar'></div>
 
+    <!-- ✅ Modal goes inside <body> -->
+    <div id="editModal" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%,-50%);
+    background:white; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.2); z-index:999;">
+        <h3>Edit Appointment</h3>
+        <form id="editForm">
+            <input type="hidden" id="event-id">
+            <label>Title: <input type="text" id="event-title" required></label><br><br>
+            <label>Date & Time: <input type="datetime-local" id="event-datetime" required></label><br><br>
+            <button type="submit">Save</button>
+            <button type="button" id="deleteBtn" style="margin-left:10px; color: red;">Delete</button>
+            <button type="button" onclick="closeModal()" style="margin-left:10px;">Cancel</button>
+        </form>
+    </div>
+
     <script>
+      function closeModal() {
+          document.getElementById("editModal").style.display = 'none';
+      }
+
       document.addEventListener('DOMContentLoaded', function () {
         let calendarEl = document.getElementById('calendar');
 
@@ -43,27 +61,13 @@
           eventTextColor: 'white',
 
           eventClick: function(info) {
-            const newTitle = prompt('Edit appointment title (e.g. reason):', info.event.title);
+            document.getElementById("event-id").value = info.event.id;
+            document.getElementById("event-title").value = ' ';
 
-            if (newTitle) {
-              fetch('/accounts/calendar/update/', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({
-                  id: info.event.id,
-                  title: newTitle
-                })
-              }).then(response => {
-                if (response.ok) {
-                  info.event.setProp('title', newTitle);
-                } else {
-                  alert("Failed to update appointment.");
-                }
-              });
-            }
+            const start = new Date(info.event.start);
+            document.getElementById("event-datetime").value = start.toISOString().slice(0,16);
+
+            document.getElementById("editModal").style.display = 'block';
           }
         });
 
@@ -83,6 +87,51 @@
           }
           return cookieValue;
         }
+
+        document.getElementById("editForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const id = document.getElementById("event-id").value;
+            const title = document.getElementById("event-title").value;
+            const datetime = document.getElementById("event-datetime").value;
+
+            fetch('/accounts/calendar/update/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ id, title, datetime })
+            }).then(response => {
+                if (response.ok) {
+                    closeModal();
+                    location.reload();
+                } else {
+                    alert("Failed to update");
+                }
+            });
+        });
+
+        document.getElementById("deleteBtn").addEventListener("click", function() {
+            const id = document.getElementById("event-id").value;
+
+            if (confirm("Delete this appointment?")) {
+                fetch(`/accounts/calendar/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ id })
+                }).then(response => {
+                    if (response.ok) {
+                        closeModal();
+                        location.reload();
+                    } else {
+                        alert("Failed to delete");
+                    }
+                });
+            }
+        });
       });
     </script>
 </body>

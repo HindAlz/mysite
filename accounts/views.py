@@ -80,20 +80,6 @@ from main.models import Appointment  # or from .models if Appointment is in acco
 def calendar_page(request):
     return render(request, 'accounts/staff_calendar.html')
 
-@login_required
-def calendar_data(request):
-    appointments = Appointment.objects.all()
-    events = []
-
-    for appt in appointments:
-        events.append({
-            "id": appt.id,
-            "title": f"{appt.patient.age} - {appt.appointment_type}",
-            "start": appt.date.isoformat(),
-            "end": (appt.date + timedelta(hours=1)).isoformat(),
-        })
-
-    return JsonResponse(events, safe=False)
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
@@ -114,3 +100,50 @@ def update_appointment(request):
         except Appointment.DoesNotExist:
             return JsonResponse({'error': 'Appointment not found'}, status=404)
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@csrf_exempt
+def update_appointment(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            appt = Appointment.objects.get(id=data['id'])
+            appt.appointment_type = data['title']
+            appt.date = data['datetime']
+            appt.save()
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Invalid method'}, status=405)
+
+@csrf_exempt
+def delete_appointment(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            appt = Appointment.objects.get(id=data['id'])
+            appt.delete()
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Invalid method'}, status=405)
+
+
+from django.http import JsonResponse
+from main.models import Appointment
+from datetime import timedelta
+
+
+def calendar_data(request):
+    # Fetch all appointments
+    appointments = Appointment.objects.all()
+    events = []
+
+    for appt in appointments:
+        events.append({
+            "id": appt.id,  # Ensure the ID is included for edit/delete
+            "title": f"{appt.patient.age} - {appt.appointment_type}",
+            "start": appt.date.isoformat(),
+            "end": (appt.date + timedelta(hours=1)).isoformat(),
+        })
+
+    return JsonResponse(events, safe=False)
