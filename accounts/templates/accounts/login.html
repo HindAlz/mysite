@@ -1,19 +1,58 @@
-<h2>Login</h2>
-<form method="POST">
-  {% csrf_token %}
-  <label>Username:</label>
-  <input type="text" name="username" required><br>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Login{% endblock %}</title>
 
-  <label>Password:</label>
-  <input type="password" name="password" required><br>
+  <!-- Bootstrap CSS Link -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <button type="submit">Log In</button>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  {% block content %}
+  <div class="container mt-5">
+    <div class="card shadow-lg mx-auto" style="max-width: 30rem; border-radius: 12px;">
+      <div class="card-body p-5">
+        <h2 class="text-center mb-4 text-primary">Welcome Back</h2>
+        <form method="POST">
+          {% csrf_token %}
 
-  {% if messages %}
-    <ul>
-      {% for message in messages %}
-        <li>{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-</form>
+          <div class="mb-3">
+            <label for="username" class="form-label text-muted">Username</label>
+            <input type="text" name="username" id="username" class="form-control" placeholder="Enter your username" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="password" class="form-label text-muted">Password</label>
+            <input type="password" name="password" id="password" class="form-control" placeholder="Enter your password" required>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <button type="submit" class="btn btn-primary w-100 py-2">Log In</button>
+          </div>
+
+          {% if messages %}
+            <div class="alert alert-danger mt-3">
+              <ul class="mb-0">
+                {% for message in messages %}
+                  <li>{{ message }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+        </form>
+        <div class="text-center mt-2">
+          <span class="text-muted">Don't have an account?</span>
+          <a href="#" class="text-primary">Sign Up</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endblock %}
+
+  <!-- Bootstrap JS (Optional for interactions) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
